@@ -30,7 +30,6 @@ RUN add-apt-repository ppa:ondrej/php -y && \
     php8.2-pgsql \
     php8.2-xml \
     php8.2-mbstring \
-    php8.2-json \
     php8.2-intl \
     php8.2-bcmath \
     php8.2-sqlite3 \
