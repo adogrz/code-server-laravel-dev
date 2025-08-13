@@ -84,6 +84,15 @@ RUN echo "memory_limit = 512M" >> /etc/php/8.2/cli/php.ini && \
     echo "upload_max_filesize = 100M" >> /etc/php/8.2/cli/php.ini && \
     echo "post_max_size = 100M" >> /etc/php/8.2/cli/php.ini
 
+# Crear script de inicio personalizado para Code Server
+RUN echo '#!/bin/bash' > /usr/bin/code-server-start && \
+    echo 'if [ -n "$PROXY_DOMAIN" ]; then' >> /usr/bin/code-server-start && \
+    echo '  exec /usr/bin/code-server --bind-addr 0.0.0.0:8443 --proxy-domain "$PROXY_DOMAIN" "$@"' >> /usr/bin/code-server-start && \
+    echo 'else' >> /usr/bin/code-server-start && \
+    echo '  exec /usr/bin/code-server --bind-addr 0.0.0.0:8443 "$@"' >> /usr/bin/code-server-start && \
+    echo 'fi' >> /usr/bin/code-server-start && \
+    chmod +x /usr/bin/code-server-start
+
 # Exponer solo el puerto de code-server
 EXPOSE 8443
 

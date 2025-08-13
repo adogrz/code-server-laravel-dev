@@ -42,7 +42,39 @@ EJEMPLOS:
     $0 -p 8001 -v 5174         # Puertos personalizados
     $0 --yarn --no-migrate     # Usar yarn y sin migraciones
 
+ACCESO A SERVICIOS:
+    Una vez iniciado, accede a:
+    🎨 Code Server: https://$PROXY_DOMAIN/
+    🐘 Laravel App: https://$PROXY_DOMAIN/proxy/$PHP_PORT
+    ⚡ Vite Dev Server: https://$PROXY_DOMAIN/proxy/$VITE_PORT
+
 EOF
+}
+
+# Función para verificar si un puerto está disponible
+check_port() {
+    local port=$1
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        return 1  # Puerto ocupado
+    else
+        return 0  # Puerto disponible
+    fi
+}
+
+# Función para encontrar puerto disponible
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    
+    while ! check_port $port; do
+        port=$((port + 1))
+        if [ $port -gt $((start_port + 100)) ]; then
+            echo "❌ No se pudo encontrar puerto disponible cerca de $start_port"
+            exit 1
+        fi
+    done
+    
+    echo $port
 }
 
 # =============================================================================
@@ -96,7 +128,7 @@ trap cleanup SIGINT SIGTERM
 if [ ! -f "artisan" ]; then
     echo "❌ No se encontró el archivo artisan."
     echo "   ¿Estás en la raíz de un proyecto Laravel?"
-    echo "   Usa: ./scripts/setup-laravel-inertia.sh para crear uno nuevo"
+    echo "   Usa: laravel new mi-proyecto para crear uno nuevo"
     exit 1
 fi
 
@@ -104,6 +136,19 @@ fi
 if [ ! -f "package.json" ]; then
     echo "❌ No se encontró package.json. ¿Es un proyecto con frontend?"
     exit 1
+fi
+
+# Verificar puertos disponibles
+if ! check_port $PHP_PORT; then
+    echo "⚠️ Puerto $PHP_PORT ocupado, buscando alternativa..."
+    PHP_PORT=$(find_available_port $PHP_PORT)
+    echo "✅ Usando puerto $PHP_PORT para Laravel"
+fi
+
+if ! check_port $VITE_PORT; then
+    echo "⚠️ Puerto $VITE_PORT ocupado, buscando alternativa..."
+    VITE_PORT=$(find_available_port $VITE_PORT)
+    echo "✅ Usando puerto $VITE_PORT para Vite"
 fi
 
 # =============================================================================
@@ -161,9 +206,14 @@ DB_CONNECTION=sqlite
 # DB_DATABASE=laravel
 # DB_USERNAME=root
 # DB_PASSWORD=
+
+VITE_DEV_SERVER_URL=http://localhost:$VITE_PORT
 EOF
     fi
 fi
+
+# Actualizar APP_URL en .env para que coincida con el puerto
+sed -i "s|APP_URL=.*|APP_URL=http://localhost:$PHP_PORT|" .env
 
 # Generar clave de aplicación si no existe
 if ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
@@ -190,26 +240,68 @@ php artisan route:clear >/dev/null 2>&1 || true
 php artisan view:clear >/dev/null 2>&1 || true
 
 # =============================================================================
+# CONFIGURACIÓN ESPECÍFICA PARA INERTIA + VITE
+# =============================================================================
+
+# Verificar si existe vite.config.js y configurarlo para proxy
+if [ -f "vite.config.js" ]; then
+    echo "⚙️ Configurando Vite para desarrollo..."
+    # Backup del archivo original
+    cp vite.config.js vite.config.js.backup 2>/dev/null || true
+    
+    # Crear configuración optimizada para Code Server
+    cat > vite.config.js << 'EOF'
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: 'resources/js/app.jsx',
+            refresh: true,
+        }),
+        react(),
+    ],
+    server: {
+        host: '0.0.0.0', // Escuchar en todas las interfaces
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
+    },
+});
+EOF
+fi
+
+# =============================================================================
 # INICIO DE SERVICIOS
 # =============================================================================
 
 echo ""
 echo "🌐 Iniciando servidor Laravel..."
-echo "   📝 Accede vía: https://$PROXY_DOMAIN/proxy/$PHP_PORT"
-php artisan serve --host=127.0.0.1 --port=$PHP_PORT &
+echo "   📝 Accede vía: https://${PROXY_DOMAIN:-localhost:8443}/proxy/$PHP_PORT"
+
+# Laravel debe escuchar en 0.0.0.0 para ser accesible desde el proxy
+php artisan serve --host=0.0.0.0 --port=$PHP_PORT &
 LARAVEL_PID=$!
 
 # Esperar un poco para que Laravel inicie
-sleep 2
+sleep 3
 
 echo ""
 echo "⚡ Iniciando Vite dev server..."
-echo "   📝 Accede vía: https://$PROXY_DOMAIN/proxy/$VITE_PORT"
+echo "   📝 Accede vía: https://${PROXY_DOMAIN:-localhost:8443}/proxy/$VITE_PORT"
+
+# Configurar variables de entorno para Vite
+export VITE_DEV_SERVER_HOST="0.0.0.0"
+export VITE_DEV_SERVER_PORT=$VITE_PORT
 
 if $USE_YARN; then
-    yarn dev --host=127.0.0.1 --port=$VITE_PORT &
+    yarn dev --host=0.0.0.0 --port=$VITE_PORT &
 else
-    npm run dev -- --host=127.0.0.1 --port=$VITE_PORT &
+    npm run dev -- --host=0.0.0.0 --port=$VITE_PORT &
 fi
 VITE_PID=$!
 
@@ -217,14 +309,24 @@ VITE_PID=$!
 # INFORMACIÓN FINAL
 # =============================================================================
 
-sleep 3
+sleep 5
 echo ""
 echo "✅ ¡Servicios iniciados exitosamente!"
 echo ""
 echo "🔗 URLs disponibles:"
-echo "   📝 Code Server (VS Code): https://$PROXY_DOMAIN"
-echo "   🐘 Laravel App: https://$PROXY_DOMAIN/proxy/$PHP_PORT"
-echo "   ⚡ Vite Dev Server: https://$PROXY_DOMAIN/proxy/$VITE_PORT"
+if [ -n "$PROXY_DOMAIN" ]; then
+    echo "   📝 Code Server (VS Code): https://$PROXY_DOMAIN"
+    echo "   🐘 Laravel App: https://$PROXY_DOMAIN/proxy/$PHP_PORT"
+    echo "   ⚡ Vite Dev Server: https://$PROXY_DOMAIN/proxy/$VITE_PORT"
+    echo ""
+    echo "   💡 También disponible vía subdominio (si tienes wildcard DNS):"
+    echo "   🐘 Laravel App: https://$PHP_PORT.$PROXY_DOMAIN"
+    echo "   ⚡ Vite Dev Server: https://$VITE_PORT.$PROXY_DOMAIN"
+else
+    echo "   📝 Code Server: http://localhost:8443"
+    echo "   🐘 Laravel App: http://localhost:8443/proxy/$PHP_PORT"
+    echo "   ⚡ Vite Dev Server: http://localhost:8443/proxy/$VITE_PORT"
+fi
 echo ""
 echo "📊 Información de servicios:"
 echo "   🐘 Laravel PID: $LARAVEL_PID (Puerto: $PHP_PORT)"
