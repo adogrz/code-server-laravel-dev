@@ -29,8 +29,7 @@ services:
       - yarn_cache:/usr/local/share/.cache/yarn
       # Compartir zona horaria del host
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "${HOST_PORT:-8443}:8443"
+    ports: ${HOST_PORT:-8443}:8443
     restart: unless-stopped
     networks:
       - code-server-network
@@ -40,16 +39,18 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    # Comando personalizado para iniciar code-server con proxy-domain
+    # Comando corregido para Code Server con proxy-domain
     command: >
       sh -c "
+        /init &
+        sleep 15 &&
+        pkill -f 'code-server' &&
         if [ -n \"$PROXY_DOMAIN\" ]; then
-          /init &
-          sleep 10 &&
-          pkill -f 'code-server' &&
-          su-exec abc code-server --bind-addr 0.0.0.0:8443 --proxy-domain \"$PROXY_DOMAIN\" /config/workspace
+          echo '🌐 Iniciando Code Server con proxy-domain: $PROXY_DOMAIN' &&
+          su-exec abc code-server --bind-addr 0.0.0.0:8443 --proxy-domain \"$PROXY_DOMAIN\" --disable-telemetry /config/workspace
         else
-          /init
+          echo '🏠 Iniciando Code Server en modo local' &&
+          su-exec abc code-server --bind-addr 0.0.0.0:8443 --disable-telemetry /config/workspace
         fi
       "
 
