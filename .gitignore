@@ -1,0 +1,195 @@
+# =============================================================================
+# CODE SERVER LARAVEL/REACT DEVELOPMENT ENVIRONMENT
+# =============================================================================
+
+# Archivos de entorno (¡IMPORTANTE! - contienen credenciales)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Configuración específica del usuario
+docker-compose.override.yml
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+
+# Logs de Docker
+*.log
+
+# Archivos temporales de Docker
+.dockerignore.tmp
+
+# =============================================================================
+# DIRECTORIOS DE DATOS PERSISTENTES
+# =============================================================================
+
+# No versionar datos persistentes (estos se crean como volúmenes)
+data/
+storage/
+config/workspace/
+projects/
+
+# Cache de aplicaciones
+cache/
+tmp/
+temp/
+
+# =============================================================================
+# LOGS Y ARCHIVOS TEMPORALES
+# =============================================================================
+
+# Logs del sistema
+logs/
+*.log
+*.out
+*.err
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# EDITOR E IDE
+# =============================================================================
+
+# VS Code (local, no del contenedor)
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# =============================================================================
+# SISTEMA OPERATIVO
+# =============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# =============================================================================
+# SEGURIDAD
+# =============================================================================
+
+# Claves y certificados
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# Archivos de backup que puedan contener info sensible
+*.backup
+*.sql
+*.dump
+
+# =============================================================================
+# NODE.JS (para proyectos dentro del contenedor)
+# =============================================================================
+
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# =============================================================================
+# PHP/COMPOSER (para proyectos dentro del contenedor)
+# =============================================================================
+
+# Dependencias
+vendor/
+
+# Cache de Composer
+composer.phar
+composer.lock
+
+# Laravel específico
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
+
+# =============================================================================
+# BUILDS Y DISTRIBUCIÓN
+# =============================================================================
+
+# Build outputs
+dist/
+build/
+public/build/
+public/hot
+
+# =============================================================================
+# TESTING
+# =============================================================================
+
+# Coverage reports
+coverage/
+*.coverage
+.nyc_output
+.coverage
+htmlcov/
+
+# Test results
+.phpunit.result.cache
+phpunit.xml
+
+# =============================================================================
+# DOCUMENTACIÓN AUTO-GENERADA
+# =============================================================================
+
+# API docs
+docs/api/
+api-docs/
+
+# =============================================================================
+# OTROS
+# =============================================================================
+
+# Archivos de configuración local específicos
+local.conf
+local.ini
+*.local

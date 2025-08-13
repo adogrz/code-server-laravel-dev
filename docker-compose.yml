@@ -1,0 +1,52 @@
+---
+services:
+  code-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-server-laravel-dev
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TIMEZONE}
+      - PASSWORD=${CODE_PASSWORD}
+      - SUDO_PASSWORD=${SUDO_PASSWORD}
+      - PROXY_DOMAIN=${PROXY_DOMAIN}
+      - DEFAULT_WORKSPACE=${DEFAULT_WORKSPACE}
+      - PWA_APPNAME=${PWA_APPNAME:-Laravel Dev}
+    volumes:
+      # Configuración persistente de code-server
+      - ${CONFIG_PATH}:/config
+      # Workspace para proyectos
+      - ${PROJECTS_PATH}:/config/workspace
+      # Cache de Composer (mejora rendimiento)
+      - composer_cache:/root/.composer/cache
+      # Cache de npm (mejora rendimiento)
+      - npm_cache:/root/.npm
+      # Cache de yarn (mejora rendimiento)
+      - yarn_cache:/usr/local/share/.cache/yarn
+      # Compartir zona horaria del host
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "${HOST_PORT:-8443}:8443"
+    restart: unless-stopped
+    networks:
+      - code-server-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8443"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  composer_cache:
+    driver: local
+  npm_cache:
+    driver: local
+  yarn_cache:
+    driver: local
+
+networks:
+  code-server-network:
+    driver: bridge

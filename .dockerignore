@@ -1,0 +1,84 @@
+# =============================================================================
+# DOCKER IGNORE - CODE SERVER LARAVEL/REACT DEV ENVIRONMENT
+# =============================================================================
+
+# Archivos de entorno (se pasan como variables)
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentación y archivos de desarrollo
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+*.md
+
+# Archivos de configuración local
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile*
+!Dockerfile
+
+# Directorios de datos y cache (se montan como volúmenes)
+data/
+storage/
+projects/
+config/
+cache/
+tmp/
+temp/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+
+# Composer
+vendor/
+composer.lock
+
+# Logs
+logs/
+*.log
+*.out
+*.err
+
+# IDE y editor
+.vscode/
+.idea/
+*.sublime-*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+*~
+
+# Testing y coverage
+coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# Build outputs (se generan en tiempo de construcción)
+dist/
+build/
+public/build/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Seguridad
+*.pem
+*.key
+*.crt
