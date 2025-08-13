@@ -29,7 +29,8 @@ services:
       - yarn_cache:/usr/local/share/.cache/yarn
       # Compartir zona horaria del host
       - /etc/localtime:/etc/localtime:ro
-    ports: ${HOST_PORT:-8443}:8443
+    ports:
+      - ${HOST_PORT:-8443}:8443
     restart: unless-stopped
     networks:
       - code-server-network
